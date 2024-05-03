@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { AvatarImage, AvatarFallback, Avatar } from "@/components/ui/avatar";
+import { AvatarImage, AvatarFallback, Avatar } from "../ui/avatar";
 
 interface ChatListItemProps {
 	name: string;

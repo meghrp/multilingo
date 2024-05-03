@@ -1,5 +1,5 @@
-import Sidebar from "@/components/Sidebar/sidebar";
-import { ChatArea } from "@/components/Chat/chat_area";
+import Sidebar from "../components/Sidebar/sidebar";
+import { ChatArea } from "../components/Chat/chat_area";
 
 export default function Component() {
 	return (

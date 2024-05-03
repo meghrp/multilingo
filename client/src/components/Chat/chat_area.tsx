@@ -1,13 +1,12 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { SentMessage, ReceivedMessage } from "@/components/Chat/chat_messages";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { SentMessage, ReceivedMessage } from "./chat_messages";
 
 export function ChatArea() {
 	return (
 		<div className="flex-1 bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 p-4 flex flex-col">
-
-            {/* Header */}
+			{/* Header */}
 			<div className="flex items-center justify-between mb-4">
 				<div className="flex items-center gap-2">
 					<Avatar>
@@ -26,7 +25,7 @@ export function ChatArea() {
 				</div>
 			</div>
 
-            {/* Messages */}
+			{/* Messages */}
 			<div className="flex-1 overflow-y-auto">
 				<div className="flex flex-col gap-4">
 					<ReceivedMessage message="Hello, how are you?" time="12:34 PM" />
