@@ -6,6 +6,7 @@ import { Button } from "../ui/button";
 import { SentMessage, ReceivedMessage } from "./chat_messages";
 import * as signalR from "@microsoft/signalr";
 import React, { useState, useEffect } from "react";
+import { MoreVerticalIcon, PaperclipIcon, SendIcon } from "../ui/icons";
 
 export function ChatArea() {
 	const username = new Date().getTime();
@@ -66,9 +67,6 @@ export function ChatArea() {
 			{/* Messages */}
 			<div className="flex-1 overflow-y-auto">
 				<div className="flex flex-col gap-4" id="messages">
-					{/* <ReceivedMessage message="Hello, how are you?" time="12:34 PM" />
-					<SentMessage message="I'm doing great, thanks for asking!" time="12:35 PM" />
-					<ReceivedMessage message="Did you see the new design?" time="12:36 PM" /> */}
 					{chatMessages.map((message, index) => (
 						<React.Fragment key={index}>{message}</React.Fragment>
 					))}
@@ -96,32 +94,5 @@ export function ChatArea() {
 				</Button>
 			</div>
 		</div>
-	);
-}
-
-function MoreVerticalIcon(props: React.SVGProps<SVGSVGElement>) {
-	return (
-		<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-			<circle cx="12" cy="12" r="1" />
-			<circle cx="12" cy="5" r="1" />
-			<circle cx="12" cy="19" r="1" />
-		</svg>
-	);
-}
-
-function PaperclipIcon(props: React.SVGProps<SVGSVGElement>) {
-	return (
-		<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-			<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-		</svg>
-	);
-}
-
-function SendIcon(props: React.SVGProps<SVGSVGElement>) {
-	return (
-		<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-			<path d="m22 2-7 20-4-9-9-4Z" />
-			<path d="M22 2 11 13" />
-		</svg>
 	);
 }
