@@ -14,7 +14,7 @@ export function ChatArea() {
 	const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
 
 	useEffect(() => {
-		const newConn = new signalR.HubConnectionBuilder().withUrl("http://localhost:5204/hub").build();
+		const newConn = new signalR.HubConnectionBuilder().withUrl("http://localhost:5068/hub").build();
 		setConnection(newConn);
 	}, []);
 
@@ -35,7 +35,7 @@ export function ChatArea() {
 	}, [connection]);
 
 	function send() {
-		if (connection) {
+		if (connection && message.trim() !== "") {
 			connection.send("newMessage", username, message).then(() => console.log("Message sent!"));
 			setChatMessages((prev) => [...prev, <SentMessage message={message} time={username.toString()} />]);
 			setMessage("");
