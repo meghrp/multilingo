@@ -1,38 +1,62 @@
 package com.multilingo.User;
 
+import com.multilingo.Conversation.Conversation;
+
 import jakarta.persistence.*;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class User {
 
     @Id
-    @SequenceGenerator(
-            name = "user_sequence",
-            sequenceName = "user_sequence",
-            allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_sequence")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true, nullable = false)
     private String username;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(unique = true, nullable = false)
     private String email;
 
-
+    @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
     private String preferredLanguage;
 
-    public User() {
-    }
+    @ManyToMany
+    @JoinTable(
+            name = "user_conversations",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "conversation_id"))
+    private Set<Conversation> conversations = new HashSet<>();
 
-    public User(Long id, String username, String name, String email, String password, String preferredLanguage) {
+    public User() {}
+
+    public User(
+            Long id,
+            String username,
+            String name,
+            String email,
+            String password,
+            String preferredLanguage,
+            Conversation conversation) {
         this.id = id;
         this.username = username;
         this.name = name;
         this.email = email;
         this.password = password;
         this.preferredLanguage = preferredLanguage;
+        this.conversations.add(conversation);
     }
 
-    public User(String username, String name, String email, String password, String preferredLanguage) {
+    public User(
+            String username, String name, String email, String password, String preferredLanguage) {
         this.username = username;
         this.name = name;
         this.email = email;
@@ -88,13 +112,29 @@ public class User {
         this.preferredLanguage = preferredLanguage;
     }
 
+    public Set<Conversation> getConversations() {
+        return conversations;
+    }
+
+    public void setConversations(Set<Conversation> conversations) {
+        this.conversations = conversations;
+    }
+
     @Override
     public String toString() {
-        return "User{" +
-                "username='" + username + '\'' +
-                ", name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                ", preferredLanguage='" + preferredLanguage + '\'' +
-                '}';
+        return "User{"
+                + "username='"
+                + username
+                + '\''
+                + ", name='"
+                + name
+                + '\''
+                + ", email='"
+                + email
+                + '\''
+                + ", preferredLanguage='"
+                + preferredLanguage
+                + '\''
+                + '}';
     }
 }
