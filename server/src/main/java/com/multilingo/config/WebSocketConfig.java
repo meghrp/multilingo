@@ -27,6 +27,12 @@ import java.util.List;
 @Order(Ordered.HIGHEST_PRECEDENCE + 98)
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     
+    private final ObjectMapper objectMapper;
+    
+    public WebSocketConfig(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+    
     @Bean
     public HandshakeInterceptor jwtHandshakeInterceptor() {
         return new JwtHandshakeInterceptor();
@@ -34,15 +40,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
+        // Enable a simple memory-based message broker
         registry.enableSimpleBroker("/user", "/topic");
+        
+        // Set prefix for client-to-server messages
         registry.setApplicationDestinationPrefixes("/app");
+        
+        // Set prefix for user-specific destinations
         registry.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("*")
+                .setAllowedOriginPatterns("*")
                 .addInterceptors(jwtHandshakeInterceptor())
                 .withSockJS();
     }
@@ -51,11 +62,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public boolean configureMessageConverters(List<MessageConverter> messageConverters) {
         DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();
         resolver.setDefaultMimeType(APPLICATION_JSON);
+        
+        // Use the configured ObjectMapper with JavaTimeModule registered
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
-        converter.setObjectMapper(new ObjectMapper());
+        converter.setObjectMapper(this.objectMapper);
         converter.setContentTypeResolver(resolver);
+        
         messageConverters.add(converter);
-
         return false;
     }
 }

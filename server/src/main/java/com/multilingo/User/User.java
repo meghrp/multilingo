@@ -1,5 +1,6 @@
 package com.multilingo.User;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.multilingo.Conversation.Conversation;
 import com.multilingo.common.BaseEntity;
 
@@ -22,26 +23,27 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(nullable = false, length = 50, unique = true)
     private String username;
 
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(unique = true, nullable = false, length = 100)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false)
     private String password;
 
-    @Column(name = "preferred_language", nullable = false, length = 10)
+    @Column(name = "preferred_language", nullable = false)
     private String preferredLanguage;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role = UserRole.USER;
 
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "users")
+    @ManyToMany(mappedBy = "users")
+    @JsonIgnore // Prevent circular references and lazy loading issues
     private Set<Conversation> conversations = new HashSet<>();
 
     public User() {}

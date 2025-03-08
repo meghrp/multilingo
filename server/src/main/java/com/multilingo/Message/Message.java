@@ -1,5 +1,6 @@
 package com.multilingo.Message;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.multilingo.Conversation.Conversation;
 import com.multilingo.User.User;
 import com.multilingo.common.BaseEntity;
@@ -26,47 +27,46 @@ public class Message extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "sender_id", nullable = false)
+    @JsonIgnoreProperties({"email", "password", "conversations", "createdAt", "updatedAt", "deleted"})
     private User sender;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "conversation_id", nullable = false)
+    @JsonIgnoreProperties({"users", "messages", "createdAt", "updatedAt", "deleted"})
     private Conversation conversation;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "translated_content", columnDefinition = "TEXT")
     private String translatedContent;
 
-    @Column(name = "message_language", nullable = false, length = 10)
+    @Column(name = "message_language", nullable = false)
     private String messageLanguage;
 
-    @Column(name = "is_read", nullable = false)
-    private boolean read = false;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "message_type", nullable = false)
+    @Enumerated(EnumType.STRING)
     private MessageType messageType = MessageType.TEXT;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "translation_status", nullable = false)
-    private TranslationStatus translationStatus = TranslationStatus.PENDING;
-
     @Column(name = "sent_at", nullable = false)
-    @CreationTimestamp
     private LocalDateTime sentAt;
 
-    public Message() {}
+    @Column(nullable = false)
+    private boolean read = false;
 
-    public Message(
-            User sender,
-            Conversation conversation,
-            String content,
-            String messageLanguage) {
+    @Column(name = "translation_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TranslationStatus translationStatus = TranslationStatus.PENDING;
+
+    public Message() {
+    }
+
+    public Message(User sender, Conversation conversation, String content, String messageLanguage) {
         this.sender = sender;
         this.conversation = conversation;
         this.content = content;
         this.messageLanguage = messageLanguage;
+        this.sentAt = LocalDateTime.now();
     }
 
     public Message(
@@ -132,6 +132,14 @@ public class Message extends BaseEntity {
         this.messageLanguage = messageLanguage;
     }
 
+    public MessageType getMessageType() {
+        return messageType;
+    }
+
+    public void setMessageType(MessageType messageType) {
+        this.messageType = messageType;
+    }
+
     public LocalDateTime getSentAt() {
         return sentAt;
     }
@@ -148,14 +156,6 @@ public class Message extends BaseEntity {
         this.read = read;
     }
 
-    public MessageType getMessageType() {
-        return messageType;
-    }
-
-    public void setMessageType(MessageType messageType) {
-        this.messageType = messageType;
-    }
-
     public TranslationStatus getTranslationStatus() {
         return translationStatus;
     }
@@ -169,12 +169,12 @@ public class Message extends BaseEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Message message = (Message) o;
-        return id != null && id.equals(message.id);
+        return getId() != null && getId().equals(message.getId());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return getId() != null ? getId().hashCode() : 0;
     }
 
     @Override

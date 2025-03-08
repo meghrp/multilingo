@@ -1,5 +1,6 @@
 package com.multilingo.Conversation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.multilingo.Message.Message;
 import com.multilingo.User.User;
 import com.multilingo.common.BaseEntity;
@@ -23,30 +24,27 @@ public class Conversation extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 100)
+    @Column(name = "name", length = 100)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ConversationType type;
-
-    @Column(name = "last_message_at")
-    private LocalDateTime lastMessageAt;
-
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany
     @JoinTable(
-        name = "conversation_users",
+        name = "user_conversations",
         joinColumns = @JoinColumn(name = "conversation_id"),
         inverseJoinColumns = @JoinColumn(name = "user_id"),
         indexes = {
-            @Index(name = "idx_conversation_users_conversation", columnList = "conversation_id"),
-            @Index(name = "idx_conversation_users_user", columnList = "user_id")
+            @Index(name = "idx_user_conversations_conversation", columnList = "conversation_id"),
+            @Index(name = "idx_user_conversations_user", columnList = "user_id")
         }
     )
     private Set<User> users = new HashSet<>();
 
-    @OneToMany(mappedBy = "conversation", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
+    @JsonIgnore
     private Set<Message> messages = new HashSet<>();
+
+    @Column(name = "last_message_at")
+    private LocalDateTime lastMessageAt;
 
     public Conversation() {}
 
@@ -54,18 +52,13 @@ public class Conversation extends BaseEntity {
         this.id = id;
     }
 
-    public Conversation(Set<User> users, ConversationType type) {
+    public Conversation(Set<User> users) {
         this.users = users;
-        this.type = type;
-        if (type == ConversationType.GROUP) {
-            this.name = "Group Chat";
-        }
     }
 
-    public Conversation(String name, Set<User> users, ConversationType type) {
+    public Conversation(String name, Set<User> users) {
         this.name = name;
         this.users = users;
-        this.type = type;
     }
 
     public Long getId() {
@@ -92,12 +85,12 @@ public class Conversation extends BaseEntity {
         this.users = users;
     }
 
-    public ConversationType getType() {
-        return type;
+    public Set<Message> getMessages() {
+        return messages;
     }
 
-    public void setType(ConversationType type) {
-        this.type = type;
+    public void setMessages(Set<Message> messages) {
+        this.messages = messages;
     }
 
     public LocalDateTime getLastMessageAt() {
@@ -110,19 +103,26 @@ public class Conversation extends BaseEntity {
 
     public void addUser(User user) {
         this.users.add(user);
+        user.getConversations().add(this);
+    }
+
+    public void removeUser(User user) {
+        this.users.remove(user);
+        user.getConversations().remove(this);
     }
 
     public void addMessage(Message message) {
         this.messages.add(message);
+        message.setConversation(this);
         this.lastMessageAt = LocalDateTime.now();
     }
 
-    public Set<Message> getMessages() {
-        return messages;
+    public boolean isGroupConversation() {
+        return this.users.size() > 2;
     }
 
-    public void setMessages(Set<Message> messages) {
-        this.messages = messages;
+    public boolean hasUser(User user) {
+        return this.users.contains(user);
     }
 
     @Override
@@ -130,12 +130,12 @@ public class Conversation extends BaseEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Conversation that = (Conversation) o;
-        return id != null && id.equals(that.id);
+        return getId() != null && getId().equals(that.getId());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return getId() != null ? getId().hashCode() : 0;
     }
 
     @Override
@@ -143,7 +143,6 @@ public class Conversation extends BaseEntity {
         return "Conversation{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", type=" + type +
                 ", lastMessageAt=" + lastMessageAt +
                 '}';
     }

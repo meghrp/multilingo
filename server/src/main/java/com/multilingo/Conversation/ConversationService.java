@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service for handling conversation operations.
@@ -29,33 +31,46 @@ public class ConversationService {
     }
 
     /**
-     * Creates a new conversation with the specified users.
+     * Creates a new conversation with the given user IDs.
      *
-     * @param users Set of usernames to include in the conversation
-     * @return ID of the created conversation
+     * @param userIds The IDs of the users to include in the conversation
+     * @return The ID of the created conversation
      */
     @Transactional
-    public Long createConversation(Set<String> users) {
-        Set<User> usersSet = new HashSet<>();
-        for (String username : users) {
-            usersSet.add(
-                    userRepository
-                            .findUserByUsername(username)
-                            .orElseThrow(
-                                    () ->
-                                            new IllegalArgumentException(
-                                                    "User with username "
-                                                            + username
-                                                            + " not found")));
-        }
-        if (usersSet.size() < 2) {
+    public Long createConversationFromUserIds(List<Long> userIds) {
+        List<User> users = userRepository.findAllById(userIds);
+        if (users.size() < 2) {
             throw new IllegalArgumentException(
                     "At least two users are required to create a conversation");
         }
-        Conversation conversation =
-                new Conversation(
-                        usersSet,
-                        (users.size() > 2) ? ConversationType.GROUP : ConversationType.PRIVATE);
+        Set<User> userSet = new HashSet<>(users);
+        Conversation conversation = new Conversation(userSet);
+        
+        // Set name for group conversations
+        if (users.size() > 2) {
+            conversation.setName("Group Chat");
+        }
+        
+        conversationRepository.save(conversation);
+        return conversation.getId();
+    }
+
+    /**
+     * Creates a new named conversation with the given user IDs.
+     *
+     * @param name The name of the conversation
+     * @param userIds The IDs of the users to include in the conversation
+     * @return The ID of the created conversation
+     */
+    @Transactional
+    public Long createNamedConversationFromUserIds(String name, List<Long> userIds) {
+        List<User> users = userRepository.findAllById(userIds);
+        if (users.size() < 2) {
+            throw new IllegalArgumentException(
+                    "At least two users are required to create a conversation");
+        }
+        Set<User> userSet = new HashSet<>(users);
+        Conversation conversation = new Conversation(name, userSet);
         conversationRepository.save(conversation);
         return conversation.getId();
     }
@@ -63,44 +78,30 @@ public class ConversationService {
     /**
      * Gets a conversation by ID.
      *
-     * @param conversationId ID of the conversation to retrieve
+     * @param id The ID of the conversation
      * @return The conversation
      */
-    public Conversation getConversation(Long conversationId) {
-        return conversationRepository.findConversationById(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+    public Optional<Conversation> getConversation(Long id) {
+        return conversationRepository.findConversationById(id);
     }
     
     /**
      * Gets all conversations for a user.
      *
-     * @param username Username of the user
-     * @return List of conversation DTOs
+     * @param username The username of the user
+     * @return The conversations
      */
-    public List<ConversationDTO> getUserConversations(String username) {
+    public List<Conversation> getUserConversations(String username) {
         User user = userRepository.findUserByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        
-        List<ConversationDTO> conversationDTOs = new ArrayList<>();
-        for (Conversation conversation : user.getConversations()) {
-            if (!conversation.isDeleted()) {
-                ConversationDTO dto = new ConversationDTO();
-                dto.setId(conversation.getId());
-                dto.setType(conversation.getType());
-                dto.setName(conversation.getName());
-                dto.setLastMessageAt(conversation.getLastMessageAt());
-                conversationDTOs.add(dto);
-            }
-        }
-        
-        return conversationDTOs;
+        return conversationRepository.findByUsers(user);
     }
     
     /**
      * Adds a user to a conversation.
      *
-     * @param conversationId ID of the conversation
-     * @param username Username of the user to add
+     * @param conversationId The ID of the conversation
+     * @param username The username of the user
      */
     @Transactional
     public void addUserToConversation(Long conversationId, String username) {
@@ -110,12 +111,6 @@ public class ConversationService {
         User user = userRepository.findUserByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         
-        // Check if this is a private conversation
-        if (conversation.getType() == ConversationType.PRIVATE) {
-            throw new IllegalArgumentException("Cannot add users to a private conversation");
-        }
-        
-        // Add the user to the conversation
         conversation.addUser(user);
         conversationRepository.save(conversation);
     }

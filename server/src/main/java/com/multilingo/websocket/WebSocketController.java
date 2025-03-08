@@ -1,6 +1,7 @@
 package com.multilingo.websocket;
 
 import com.multilingo.Message.Message;
+import com.multilingo.Message.MessageDTO;
 import com.multilingo.Message.MessageService;
 import com.multilingo.Message.MessageType;
 import com.multilingo.User.User;
@@ -36,10 +37,10 @@ public class WebSocketController {
      *
      * @param chatMessage The chat message
      * @param headerAccessor Header accessor for getting authentication
-     * @return The sent message
+     * @return The message DTO
      */
     @MessageMapping("/chat.sendMessage")
-    public Message sendMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+    public MessageDTO sendMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
         if (headerAccessor == null) {
             logger.warn("Header accessor is null");
             throw new IllegalStateException("Header accessor is null");
@@ -51,12 +52,15 @@ public class WebSocketController {
             logger.debug("Received message from {}: {}", username, chatMessage.getContent());
             
             User sender = userService.getUserByUsername(username);
-            return messageService.sendMessage(
+            Message message = messageService.sendMessage(
                     sender,
                     chatMessage.getConversationId(),
                     chatMessage.getContent(),
                     chatMessage.getMessageType()
             );
+            
+            // Return DTO instead of entity
+            return new MessageDTO(message);
         } else {
             logger.warn("Unauthenticated message received");
             throw new IllegalStateException("User not authenticated");
