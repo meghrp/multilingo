@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Utility class for JWT token operations
+ * Simplified utility class for JWT token operations
  */
 @Component
 public class JwtTokenUtil {
@@ -38,7 +38,7 @@ public class JwtTokenUtil {
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails.getUsername());
+        return createToken(claims, userDetails.getUsername());
     }
 
     /**
@@ -48,13 +48,13 @@ public class JwtTokenUtil {
      * @param subject Subject (username)
      * @return JWT token
      */
-    private String doGenerateToken(Map<String, Object> claims, String subject) {
+    private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationInMs))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
     
@@ -67,9 +67,9 @@ public class JwtTokenUtil {
     public String generateRefreshToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationInMs))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -138,8 +138,7 @@ public class JwtTokenUtil {
      * @return True if expired, false otherwise
      */
     private Boolean isTokenExpired(String token) {
-        final Date expiration = extractExpiration(token);
-        return expiration.before(new Date());
+        return extractExpiration(token).before(new Date());
     }
 
     /**
