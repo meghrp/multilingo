@@ -82,11 +82,11 @@ public class AuthenticationController {
         try {
             // Register user
             User user = userService.registerUser(
-                    registrationDto.getUsername(),
-                    registrationDto.getName(),
-                    registrationDto.getEmail(),
-                    registrationDto.getPassword(),
-                    registrationDto.getPreferredLanguage()
+                    registrationDto.username(),
+                    registrationDto.name(),
+                    registrationDto.email(),
+                    registrationDto.password(),
+                    registrationDto.preferredLanguage()
             );
             
             // Generate JWT token
