@@ -7,8 +7,6 @@ import com.multilingo.common.BaseEntity;
 
 import jakarta.persistence.*;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.LocalDateTime;
 
 /**

@@ -1,88 +1,74 @@
 package com.multilingo.websocket;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.multilingo.Message.MessageDTO;
+import com.multilingo.Message.MessageStatusUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.Objects;
+import java.util.List;
 
 /**
- * Utility class for WebSocket messaging
+ * Simplified utility for sending WebSocket messages
  */
 @Component
 public class WebSocketUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketUtil.class);
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    public WebSocketUtil(SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
 
     /**
      * Send a message to a specific user
      *
-     * @param username Username of the recipient
-     * @param destination Destination endpoint
-     * @param payload Message payload
+     * @param username The username of the recipient
+     * @param message The message to send
      */
-    public void sendToUser(String username, String destination, Object payload) {
-        Objects.requireNonNull(username, "Username cannot be null");
-        Objects.requireNonNull(destination, "Destination cannot be null");
-        Objects.requireNonNull(payload, "Payload cannot be null");
-        
-        if (username.trim().isEmpty()) {
-            throw new IllegalArgumentException("Username cannot be empty");
-        }
-        
-        if (destination.trim().isEmpty()) {
-            throw new IllegalArgumentException("Destination cannot be empty");
-        }
-        
-        logger.debug("Sending message to user: {} at destination: {}", username, destination);
-        messagingTemplate.convertAndSendToUser(username, destination, payload);
+    public void sendMessageToUser(String username, MessageDTO message) {
+        messagingTemplate.convertAndSendToUser(
+                username,
+                "/queue/messages",
+                message
+        );
     }
 
     /**
-     * Send a message to all users subscribed to a topic
+     * Send a status update to a specific user
      *
-     * @param destination Topic destination
-     * @param payload Message payload
+     * @param username The username of the recipient
+     * @param statusUpdate The status update to send
      */
-    public void sendToTopic(String destination, Object payload) {
-        Objects.requireNonNull(destination, "Destination cannot be null");
-        Objects.requireNonNull(payload, "Payload cannot be null");
-        
-        if (destination.trim().isEmpty()) {
-            throw new IllegalArgumentException("Destination cannot be empty");
-        }
-        
-        logger.debug("Sending message to topic: {}", destination);
-        messagingTemplate.convertAndSend(destination, payload);
+    public void sendMessageToUser(String username, MessageStatusUpdate statusUpdate) {
+        messagingTemplate.convertAndSendToUser(
+                username,
+                "/queue/status",
+                statusUpdate
+        );
     }
 
     /**
-     * Get the currently authenticated user's username
+     * Send a message to multiple users
      *
-     * @return Username of the authenticated user or null if not authenticated
+     * @param usernames List of usernames to send to
+     * @param message The message to send
      */
-    public String getCurrentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return authentication.getName();
-        }
-        return null;
+    public void sendMessageToUsers(List<String> usernames, MessageDTO message) {
+        usernames.forEach(username -> sendMessageToUser(username, message));
     }
 
     /**
-     * Check if the current user is authenticated
+     * Send a message to a topic (for group conversations)
      *
-     * @return True if authenticated, false otherwise
+     * @param topicId The ID of the topic (usually conversation ID)
+     * @param message The message to send
      */
-    public boolean isAuthenticated() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && authentication.isAuthenticated();
+    public void sendMessageToTopic(Long topicId, MessageDTO message) {
+        messagingTemplate.convertAndSend(
+                "/topic/conversation." + topicId,
+                message
+        );
     }
 } 

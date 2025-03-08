@@ -6,8 +6,6 @@ import com.multilingo.Message.MessageService;
 import com.multilingo.Message.MessageType;
 import com.multilingo.User.User;
 import com.multilingo.User.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -16,12 +14,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
 /**
- * Controller for handling WebSocket messages
+ * Simplified controller for handling WebSocket messages
  */
 @Controller
 public class WebSocketController {
-
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketController.class);
 
     @Autowired
     private MessageService messageService;
@@ -29,29 +25,16 @@ public class WebSocketController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private WebSocketUtil webSocketUtil;
-
     /**
      * Handle chat messages sent via WebSocket
-     *
-     * @param chatMessage The chat message
-     * @param headerAccessor Header accessor for getting authentication
-     * @return The message DTO
      */
     @MessageMapping("/chat.sendMessage")
     public MessageDTO sendMessage(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
-        if (headerAccessor == null) {
-            logger.warn("Header accessor is null");
-            throw new IllegalStateException("Header accessor is null");
-        }
-        
         Authentication authentication = (Authentication) headerAccessor.getUser();
         if (authentication != null && authentication.isAuthenticated()) {
             String username = authentication.getName();
-            logger.debug("Received message from {}: {}", username, chatMessage.getContent());
-            
             User sender = userService.getUserByUsername(username);
+            
             Message message = messageService.sendMessage(
                     sender,
                     chatMessage.getConversationId(),
@@ -59,36 +42,23 @@ public class WebSocketController {
                     chatMessage.getMessageType()
             );
             
-            // Return DTO instead of entity
             return new MessageDTO(message);
         } else {
-            logger.warn("Unauthenticated message received");
             throw new IllegalStateException("User not authenticated");
         }
     }
 
     /**
      * Handle message read status updates
-     *
-     * @param readStatus The read status update
-     * @param headerAccessor Header accessor for getting authentication
      */
     @MessageMapping("/chat.markRead")
     public void markMessageAsRead(@Payload ReadStatus readStatus, SimpMessageHeaderAccessor headerAccessor) {
-        if (headerAccessor == null) {
-            logger.warn("Header accessor is null");
-            throw new IllegalStateException("Header accessor is null");
-        }
-        
         Authentication authentication = (Authentication) headerAccessor.getUser();
         if (authentication != null && authentication.isAuthenticated()) {
             String username = authentication.getName();
-            logger.debug("Marking message {} as read by {}", readStatus.getMessageId(), username);
-            
             User user = userService.getUserByUsername(username);
             messageService.markAsRead(readStatus.getMessageId(), user);
         } else {
-            logger.warn("Unauthenticated read status update received");
             throw new IllegalStateException("User not authenticated");
         }
     }

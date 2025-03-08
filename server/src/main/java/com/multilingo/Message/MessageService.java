@@ -10,7 +10,6 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,18 +25,15 @@ public class MessageService {
     
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
-    private final SimpMessagingTemplate messagingTemplate;
     private final WebSocketUtil webSocketUtil;
 
     @Autowired
     public MessageService(
             MessageRepository messageRepository, 
             ConversationRepository conversationRepository,
-            SimpMessagingTemplate messagingTemplate,
             WebSocketUtil webSocketUtil) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
-        this.messagingTemplate = messagingTemplate;
         this.webSocketUtil = webSocketUtil;
     }
 
@@ -120,43 +116,27 @@ public class MessageService {
                             participant.getPreferredLanguage()
                     );
                     
-                    // Create a copy of the message with the translated content for this user
-                    Message translatedMessage = new Message();
-                    translatedMessage.setId(message.getId());
-                    translatedMessage.setSender(message.getSender());
-                    translatedMessage.setConversation(message.getConversation());
-                    translatedMessage.setContent(message.getContent());
-                    translatedMessage.setTranslatedContent(translatedContent);
-                    translatedMessage.setMessageLanguage(message.getMessageLanguage());
-                    translatedMessage.setMessageType(message.getMessageType());
-                    translatedMessage.setSentAt(message.getSentAt());
-                    translatedMessage.setTranslationStatus(TranslationStatus.COMPLETED);
+                    // Create a message DTO with the translated content for this user
+                    MessageDTO translatedMessageDTO = new MessageDTO(message);
+                    translatedMessageDTO.setTranslatedContent(translatedContent);
+                    translatedMessageDTO.setTranslationStatus(TranslationStatus.COMPLETED);
                     
                     // Send the translated message to the participant using WebSocketUtil
-                    webSocketUtil.sendToUser(
+                    webSocketUtil.sendMessageToUser(
                             participant.getUsername(), 
-                            "/messages", 
-                            translatedMessage
+                            translatedMessageDTO
                     );
                 } catch (Exception e) {
                     logger.error("Translation failed for message: {}", message.getId(), e);
                     
-                    // Send the original message with a failed translation status
-                    Message failedMessage = new Message();
-                    failedMessage.setId(message.getId());
-                    failedMessage.setSender(message.getSender());
-                    failedMessage.setConversation(message.getConversation());
-                    failedMessage.setContent(message.getContent());
-                    failedMessage.setTranslatedContent(message.getContent());
-                    failedMessage.setMessageLanguage(message.getMessageLanguage());
-                    failedMessage.setMessageType(message.getMessageType());
-                    failedMessage.setSentAt(message.getSentAt());
-                    failedMessage.setTranslationStatus(TranslationStatus.FAILED);
+                    // Create a message DTO with failed translation status
+                    MessageDTO failedMessageDTO = new MessageDTO(message);
+                    failedMessageDTO.setTranslatedContent(message.getContent());
+                    failedMessageDTO.setTranslationStatus(TranslationStatus.FAILED);
                     
-                    webSocketUtil.sendToUser(
+                    webSocketUtil.sendMessageToUser(
                             participant.getUsername(), 
-                            "/messages", 
-                            failedMessage
+                            failedMessageDTO
                     );
                 }
             }
@@ -214,9 +194,8 @@ public class MessageService {
             // Notify other participants that the message has been read
             for (User participant : message.getConversation().getUsers()) {
                 if (participant != null && !participant.equals(user)) {
-                    webSocketUtil.sendToUser(
+                    webSocketUtil.sendMessageToUser(
                             participant.getUsername(),
-                            "/message-status",
                             new MessageStatusUpdate(message.getId(), true)
                     );
                 }
@@ -233,34 +212,5 @@ public class MessageService {
         }
         
         return messageRepository.findByConversationIdOrderBySentAtAsc(conversationId);
-    }
-    
-    /**
-     * Inner class for message status updates
-     */
-    private static class MessageStatusUpdate {
-        private Long messageId;
-        private boolean read;
-        
-        public MessageStatusUpdate(Long messageId, boolean read) {
-            this.messageId = messageId;
-            this.read = read;
-        }
-        
-        public Long getMessageId() {
-            return messageId;
-        }
-        
-        public void setMessageId(Long messageId) {
-            this.messageId = messageId;
-        }
-        
-        public boolean isRead() {
-            return read;
-        }
-        
-        public void setRead(boolean read) {
-            this.read = read;
-        }
     }
 }
