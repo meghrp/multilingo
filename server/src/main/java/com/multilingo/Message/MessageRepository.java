@@ -34,5 +34,5 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     /**
      * Find unread messages for a conversation.
      */
-    List<Message> findByConversationIdAndReadFalse(Long conversationId);
+    List<Message> findByConversationIdAndIsReadFalse(Long conversationId);
 }

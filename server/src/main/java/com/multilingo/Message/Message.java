@@ -51,8 +51,8 @@ public class Message extends BaseEntity {
     @Column(name = "sent_at", nullable = false)
     private LocalDateTime sentAt;
 
-    @Column(nullable = false)
-    private boolean read = false;
+    @Column(name = "is_read", nullable = false)
+    private boolean isRead = false;
 
     @Column(name = "translation_status", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -149,11 +149,11 @@ public class Message extends BaseEntity {
     }
 
     public boolean isRead() {
-        return read;
+        return isRead;
     }
 
-    public void setRead(boolean read) {
-        this.read = read;
+    public void setRead(boolean isRead) {
+        this.isRead = isRead;
     }
 
     public TranslationStatus getTranslationStatus() {
