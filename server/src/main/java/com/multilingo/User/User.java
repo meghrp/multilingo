@@ -1,67 +1,77 @@
 package com.multilingo.User;
 
 import com.multilingo.Conversation.Conversation;
+import com.multilingo.common.BaseEntity;
 
 import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Entity representing a user in the system.
+ */
 @Entity
-public class User {
+@Table(name = "users", indexes = {
+    @Index(name = "idx_users_username", columnList = "username"),
+    @Index(name = "idx_users_email", columnList = "email")
+})
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 50)
     private String username;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 100)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String password;
 
-    @Column(nullable = false)
+    @Column(name = "preferred_language", nullable = false, length = 10)
     private String preferredLanguage;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_conversations",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "conversation_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role = UserRole.USER;
+
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "users")
     private Set<Conversation> conversations = new HashSet<>();
 
     public User() {}
 
     public User(
-            Long id,
-            String username,
-            String name,
-            String email,
-            String password,
-            String preferredLanguage,
-            Conversation conversation) {
-        this.id = id;
+            String username, 
+            String name, 
+            String email, 
+            String password, 
+            String preferredLanguage) {
         this.username = username;
         this.name = name;
         this.email = email;
         this.password = password;
         this.preferredLanguage = preferredLanguage;
-        this.conversations.add(conversation);
     }
 
     public User(
-            String username, String name, String email, String password, String preferredLanguage) {
+            String username, 
+            String name, 
+            String email, 
+            String password, 
+            String preferredLanguage,
+            UserRole role) {
         this.username = username;
         this.name = name;
         this.email = email;
         this.password = password;
         this.preferredLanguage = preferredLanguage;
+        this.role = role;
     }
 
     public Long getId() {
@@ -112,6 +122,14 @@ public class User {
         this.preferredLanguage = preferredLanguage;
     }
 
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
+    }
+
     public Set<Conversation> getConversations() {
         return conversations;
     }
@@ -123,18 +141,25 @@ public class User {
     @Override
     public String toString() {
         return "User{"
-                + "username='"
-                + username
-                + '\''
-                + ", name='"
-                + name
-                + '\''
-                + ", email='"
-                + email
-                + '\''
-                + ", preferredLanguage='"
-                + preferredLanguage
-                + '\''
+                + "id=" + id
+                + ", username='" + username + '\''
+                + ", name='" + name + '\''
+                + ", email='" + email + '\''
+                + ", preferredLanguage='" + preferredLanguage + '\''
+                + ", role=" + role
                 + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return id != null && id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }
