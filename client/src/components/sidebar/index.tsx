@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useChat } from '@/context/chat-context';
+import { useAuth } from '@/context/auth-context';
 import { ChatItem } from './chat-item';
+import { CreateConversation } from './create-conversation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
 	Search, 
-	Plus, 
 	MessageSquare, 
 	Users, 
 	Settings, 
@@ -18,7 +20,9 @@ import {
 } from 'lucide-react';
 
 export function Sidebar() {
-	const { chats, setCurrentChat, currentChatId } = useChat();
+	const router = useRouter();
+	const { logout, user } = useAuth();
+	const { chats, setCurrentChat, currentChatId, isLoading } = useChat();
 	const [activeTab, setActiveTab] = useState<'chats' | 'groups'>('chats');
 	const [searchQuery, setSearchQuery] = useState('');
 	const [isDarkMode, setIsDarkMode] = useState(false);
@@ -42,6 +46,21 @@ export function Sidebar() {
 		}
 	};
 
+	// Handle logout
+	const handleLogout = () => {
+		logout();
+		router.push('/login');
+	};
+
+	// Get user initials for avatar fallback
+	const getUserInitials = () => {
+		if (!user || !user.name) return 'U';
+		return user.name.split(' ')
+			.map(part => part[0]?.toUpperCase() || '')
+			.join('')
+			.substring(0, 2);
+	};
+
 	return (
 		<div className="h-full bg-white dark:bg-zinc-800 flex flex-col border-r border-zinc-200 dark:border-zinc-700">
 			{/* Header */}
@@ -59,7 +78,7 @@ export function Sidebar() {
 						<Avatar className="h-9 w-9">
 							<AvatarImage src="/avatars/user-1.png" alt="Your profile" />
 							<AvatarFallback className="bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200">
-								ME
+								{getUserInitials()}
 							</AvatarFallback>
 						</Avatar>
 					</div>
@@ -112,16 +131,14 @@ export function Sidebar() {
 					<h2 className="text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
 						{activeTab === 'chats' ? 'Recent' : 'Your Groups'}
 					</h2>
-					<Button 
-						size="sm" 
-						variant="ghost" 
-						className="h-7 w-7 p-0 rounded-full bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600"
-					>
-						<Plus className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
-					</Button>
+					<CreateConversation />
 				</div>
 				
-				{filteredChats.length > 0 ? (
+				{isLoading ? (
+					<div className="text-center py-8">
+						<p className="text-sm text-zinc-500 dark:text-zinc-400">Loading...</p>
+					</div>
+				) : filteredChats.length > 0 ? (
 					<div className="space-y-1">
 						{filteredChats.map(chat => (
 							<ChatItem 
@@ -140,6 +157,9 @@ export function Sidebar() {
 								: `No ${activeTab} yet`
 							}
 						</p>
+						<p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+							{!searchQuery && `Click the + button to create a new ${activeTab === 'chats' ? 'chat' : 'group'}`}
+						</p>
 					</div>
 				)}
 			</div>
@@ -150,8 +170,13 @@ export function Sidebar() {
 					<Button variant="ghost" size="icon" className="rounded-full">
 						<Settings className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
 					</Button>
-					<Button variant="ghost" size="icon" className="rounded-full">
-						<LogOut className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
+					<Button 
+						variant="ghost" 
+						size="icon" 
+						className="rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20"
+						onClick={handleLogout}
+					>
+						<LogOut className="h-5 w-5" />
 					</Button>
 				</div>
 			</div>

@@ -13,18 +13,32 @@ interface ChatItemProps {
 export function ChatItem({ chat, isActive, onClick }: ChatItemProps) {
   // Format timestamp to display only time if today, otherwise show date
   const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    
-    if (
-      date.getDate() === now.getDate() &&
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear()
-    ) {
-      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    try {
+      const date = new Date(timestamp);
+      const now = new Date();
+      
+      if (
+        date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear()
+      ) {
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      } else {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return 'Recent';
     }
+  };
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0]?.toUpperCase() || '')
+      .join('')
+      .substring(0, 2);
   };
 
   return (
@@ -40,7 +54,7 @@ export function ChatItem({ chat, isActive, onClick }: ChatItemProps) {
         <Avatar className="h-12 w-12">
           <AvatarImage src={chat.avatar} alt={chat.name} />
           <AvatarFallback className="bg-rose-100 text-rose-500 dark:bg-rose-900 dark:text-rose-200">
-            {chat.name.substring(0, 2).toUpperCase()}
+            {getInitials(chat.name || 'Chat')}
           </AvatarFallback>
         </Avatar>
         
@@ -60,16 +74,16 @@ export function ChatItem({ chat, isActive, onClick }: ChatItemProps) {
       <div className="flex-1 overflow-hidden">
         <div className="flex items-center justify-between">
           <h3 className={`text-sm font-medium truncate ${isActive ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-700 dark:text-zinc-300'}`}>
-            {chat.name}
+            {chat.name || 'Unnamed Chat'}
           </h3>
           <span className="text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap pl-2">
-            {formatTime(chat.lastMessageTime)}
+            {chat.lastMessageTime ? formatTime(chat.lastMessageTime) : 'New'}
           </span>
         </div>
         
         <div className="flex items-center justify-between mt-1">
           <p className="text-xs truncate text-zinc-500 dark:text-zinc-400 max-w-[180px]">
-            {chat.lastMessage}
+            {chat.lastMessage || 'No messages yet'}
           </p>
           
           {/* Unread badge */}

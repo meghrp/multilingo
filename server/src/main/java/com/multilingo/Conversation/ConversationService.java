@@ -32,20 +32,21 @@ public class ConversationService {
      * Creates a new conversation with the given user IDs.
      *
      * @param userIds The IDs of the users to include in the conversation
+     * @param type The type of conversation (PRIVATE or GROUP)
      * @return The ID of the created conversation
      */
     @Transactional
-    public Long createConversationFromUserIds(List<Long> userIds) {
+    public Long createConversationFromUserIds(List<Long> userIds, ConversationType type) {
         List<User> users = userRepository.findAllById(userIds);
         if (users.size() < 2) {
             throw new IllegalArgumentException(
                     "At least two users are required to create a conversation");
         }
         Set<User> userSet = new HashSet<>(users);
-        Conversation conversation = new Conversation(userSet);
+        Conversation conversation = new Conversation(userSet, type);
         
         // Set name for group conversations
-        if (users.size() > 2) {
+        if (users.size() > 2 || type == ConversationType.GROUP) {
             conversation.setName("Group Chat");
         }
         

@@ -79,6 +79,15 @@ public class MessageService {
         conversation.setLastMessageAt(message.getSentAt());
         conversationRepository.save(conversation);
 
+        // Create a MessageDTO for the sender
+        MessageDTO senderMessageDTO = new MessageDTO(message);
+        
+        // Send the message to the conversation topic for real-time updates
+        webSocketUtil.sendMessageToTopic(conversationId, senderMessageDTO);
+        
+        // Also send to the sender directly to ensure they receive it
+        webSocketUtil.sendMessageToUser(sender.getUsername(), senderMessageDTO);
+
         // Process translations for all participants
         processTranslations(message, conversation, sender);
 

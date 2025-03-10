@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Controller for conversation operations.
  */
@@ -44,8 +46,16 @@ public class ConversationController {
      */
     @PostMapping
     public ResponseEntity<Long> createConversation(@RequestBody ConversationRequest request) {
+        // Determine type if not provided
+        ConversationType type = request.getType();
+        if (type == null) {
+            // Default to GROUP if more than 2 users, otherwise PRIVATE
+            type = request.getUsers().size() > 2 ? ConversationType.GROUP : ConversationType.PRIVATE;
+        }
+        
         return ResponseEntity.ok(conversationService.createConversationFromUserIds(
-                request.getUsers().stream().map(Long::valueOf).collect(Collectors.toList())
+                request.getUsers().stream().map(Long::valueOf).collect(Collectors.toList()),
+                type
         ));
     }
     
@@ -80,7 +90,12 @@ public class ConversationController {
     public static class ConversationRequest {
         private Set<String> users;
         
+        @JsonProperty("type")
+        private ConversationType type;
+        
         public ConversationRequest() {
+            // Default to PRIVATE type if not specified
+            this.type = ConversationType.PRIVATE;
         }
         
         public Set<String> getUsers() {
@@ -89,6 +104,14 @@ public class ConversationController {
         
         public void setUsers(Set<String> users) {
             this.users = users;
+        }
+        
+        public ConversationType getType() {
+            return type;
+        }
+        
+        public void setType(ConversationType type) {
+            this.type = type;
         }
     }
 }

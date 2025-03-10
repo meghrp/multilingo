@@ -27,6 +27,10 @@ public class Conversation extends BaseEntity {
     @Column(name = "name", length = 100)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private ConversationType type;
+
     @ManyToMany
     @JoinTable(
         name = "user_conversations",
@@ -54,11 +58,24 @@ public class Conversation extends BaseEntity {
 
     public Conversation(Set<User> users) {
         this.users = users;
+        this.type = ConversationType.PRIVATE; // Default to PRIVATE
     }
 
     public Conversation(String name, Set<User> users) {
         this.name = name;
         this.users = users;
+        this.type = users.size() > 2 ? ConversationType.GROUP : ConversationType.PRIVATE;
+    }
+
+    public Conversation(Set<User> users, ConversationType type) {
+        this.users = users;
+        this.type = type;
+    }
+
+    public Conversation(String name, Set<User> users, ConversationType type) {
+        this.name = name;
+        this.users = users;
+        this.type = type;
     }
 
     public Long getId() {
@@ -123,6 +140,14 @@ public class Conversation extends BaseEntity {
 
     public boolean hasUser(User user) {
         return this.users.contains(user);
+    }
+
+    public ConversationType getType() {
+        return type;
+    }
+
+    public void setType(ConversationType type) {
+        this.type = type;
     }
 
     @Override

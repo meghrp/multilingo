@@ -6,6 +6,7 @@ export interface MessageType {
   isSystem: boolean;
   originalContent?: string;
   originalLanguage?: string;
+  conversationId?: string;
 }
 
 export interface GroupMember {
